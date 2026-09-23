@@ -31,69 +31,6 @@ REPLACE_SMALI_METHOD() {
 }" "$FILE" <<< "$NEW_BODY"
 }
 
-PATCH_FLAG_SECURE() {
-	echo ""
-	if [ "$#" -ne 1 ]; then
-        echo "Usage: ${FUNCNAME[0]} <EXTRACTED_SERVICES_DIRECTORY>"
-        return 1
-    fi
-
-	echo "${YELLOW}Patching flag secure.${RESET}"
-
-	local FILE_1="${1}/smali_classes2/com/android/server/wm/WindowState.smali"
-    local METHOD_NAME_1=".method public final isSecureLocked()Z"
-    local REPLACE_BODY_1='
-    .locals 1
-
-    const/4 v0, 0x0
-
-    return v0
-    '
-    REPLACE_SMALI_METHOD "$FILE_1" "$METHOD_NAME_1" "$REPLACE_BODY_1"
-  
-	local FILE_2="${1}/smali_classes2/com/android/server/wm/WindowManagerService.smali"
-    local METHOD_NAME_2=".method public final notifyScreenshotListeners(I)Ljava/util/List;"
-    local REPLACE_BODY_2='
-    .locals 3
-    .annotation system Ldalvik/annotation/Signature;
-        value = {
-            "(I)",
-            "Ljava/util/List<",
-            "Landroid/content/ComponentName;",
-            ">;"
-        }
-    .end annotation
-
-    const-string/jumbo v0, "android.permission.STATUS_BAR_SERVICE"
-
-    const-string/jumbo v1, "notifyScreenshotListeners()"
-
-    const/4 v2, 0x1
-
-    invoke-virtual {p0, v0, v1, v2}, Lcom/android/server/wm/WindowManagerService;->checkCallingPermission$1(Ljava/lang/String;Ljava/lang/String;Z)Z
-
-    move-result v0
-
-    if-eqz v0, :cond_43
-
-    invoke-static {}, Ljava/util/Collections;->emptyList()Ljava/util/List;
-
-    move-result-object p0
-
-    return-object p0
-
-    :cond_43
-    new-instance p0, Ljava/lang/SecurityException;
-
-    const-string/jumbo p1, "Requires STATUS_BAR_SERVICE permission"
-
-    invoke-direct {p0, p1}, Ljava/lang/SecurityException;-><init>(Ljava/lang/String;)V
-
-    throw p0
-    '
-    REPLACE_SMALI_METHOD "$FILE_2" "$METHOD_NAME_2" "$REPLACE_BODY_2"
-}
-
 
 PATCH_SECURE_FOLDER() {
     echo ""
